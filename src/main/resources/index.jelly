@@ -1,0 +1,5 @@
+<?jelly escape-by-default='true'?>
+<div>
+    A plugin for Perforce Static Analysis tools (Klocwork and Helix QAC). Helps automate the scans and retrieval of issue
+    metrics for quality gating.
+</div>
