@@ -1,9 +1,5 @@
 package com.perforce.sa;
 
-// import edu.hm.hafner.echarts.JacksonFacade;
-// import edu.hm.hafner.echarts.Palette;
-// import edu.hm.hafner.echarts.PieChartModel;
-// import edu.hm.hafner.echarts.PieData;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.model.Action;
