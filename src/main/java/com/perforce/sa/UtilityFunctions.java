@@ -13,8 +13,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 public class UtilityFunctions {
 
@@ -51,7 +49,7 @@ public class UtilityFunctions {
         }
     }
 
-    public static ByteArrayOutputStream executeCommandParseOutput(
+    public static BufferedReader executeCommandParseOutput(
             Launcher launcher, FilePath buildDir, EnvVars envVars, ArgumentListBuilder cmds) throws AbortException {
         if (launcher.isUnix()) {
             cmds = new ArgumentListBuilder("/bin/sh", "-c", cmds.toString());
@@ -68,7 +66,12 @@ public class UtilityFunctions {
                     .envs(envVars)
                     .cmds(cmds)
                     .join();
-            return outputStream;
+            InputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            return bufferedReader;
         } catch (IOException | InterruptedException ex) {
             throw new AbortException(ex.getMessage());
         }
@@ -95,18 +98,6 @@ public class UtilityFunctions {
             serverURL = matcher.group(1);
         }
         return serverURL;
-    }
-
-    public static JSONArray getJSONRespose(String request, String ltoken, String user, String url)
-            throws AbortException {
-        JSONArray response;
-        try {
-            ValidateAPIConnector apiConnection = new ValidateAPIConnector(url, user, ltoken);
-            response = apiConnection.sendRequest(request);
-        } catch (IOException ex) {
-            throw new AbortException("Error: failed to connect to the Validate API.\nCause: " + ex.getMessage());
-        }
-        return response;
     }
 
     public static String formatAPIRequest(String action, HashMap<String, String> args) throws AbortException {
@@ -140,22 +131,67 @@ public class UtilityFunctions {
         return Arrays.copyOf(argsList.toArray(), argsList.size(), String[].class);
     }
 
-    public static String getValidateProjectId(AnalysisBuilderConfig analysisConfig) throws AbortException {
-        HashMap<String, String> args = new HashMap<>();
-        args.put("include_streams", "true");
-        String request = UtilityFunctions.formatAPIRequest("projects", args);
-        JSONArray response = UtilityFunctions.getJSONRespose(
-                request,
-                analysisConfig.getValidateApiTokenPlain(),
-                analysisConfig.getValidateApiUser(),
-                UtilityFunctions.getValidateServerURL(analysisConfig.getValidateProjectURL()));
-        for (int i = 0; i < response.size(); i++) {
-            JSONObject jObj = response.getJSONObject(i);
-            if (jObj.getString("name")
-                    .equals(UtilityFunctions.getValidateProjectName(analysisConfig.getValidateProjectURL()))) {
-                return jObj.getString("id");
+    public static String getValidateProjectId(
+            AnalysisBuilderConfig analysisConfig, Launcher launcher, FilePath buildDir, EnvVars envVars)
+            throws AbortException {
+        if (analysisConfig.getAnalysisType().equals("Delta")) {
+            if (analysisConfig.getEngine().equals("Klocwork")) {
+                ArgumentListBuilder cmd = new ArgumentListBuilder("kwciagent", "info");
+                BufferedReader response = UtilityFunctions.executeCommandParseOutput(launcher, buildDir, envVars, cmd);
+                if (response != null) {
+                    String line = null;
+                    try {
+                        while ((line = response.readLine()) != null) {
+                            if (!line.trim().equals("") && line.trim().startsWith("review.path=")) {
+                                Pattern pattern = Pattern.compile("project\\=(.*),");
+                                Matcher matcher = pattern.matcher(line.trim());
+                                if (matcher.find()) {
+                                    return matcher.group(0);
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new AbortException(e.getMessage());
+                    }
+                }
+            }
+        } else {
+            if (analysisConfig.getEngine().equals("Klocwork")) {
+                ArgumentListBuilder cmd = new ArgumentListBuilder("kwadmin", "list-projects", "-s", "-f");
+                BufferedReader response = UtilityFunctions.executeCommandParseOutput(launcher, buildDir, envVars, cmd);
+                if (response != null) {
+                    String line = null;
+                    try {
+                        String id = "";
+                        while ((line = response.readLine()) != null) {
+                            if (!line.trim().equals("")) {
+                                if (line.trim().contains("\"id\":")) {
+                                    Pattern pattern = Pattern.compile("\"id\": \"(.*)\"");
+                                    Matcher matcher = pattern.matcher(line.trim());
+                                    if (matcher.find() && matcher.group(0) != null) {
+                                        id = matcher.group(0);
+                                    }
+                                } else if (line.trim().contains("\"name\":")) {
+                                    Pattern pattern = Pattern.compile("\"name\": \"(.*)\"");
+                                    Matcher matcher = pattern.matcher(line.trim());
+                                    if (matcher.find() && matcher.group(0) != null) {
+                                        String name = matcher.group(0);
+                                        if (name.equals(UtilityFunctions.getValidateProjectName(
+                                                analysisConfig.getValidateProjectURL()))) {
+                                            if (!id.equals("")) {
+                                                return id;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new AbortException(e.getMessage());
+                    }
+                }
             }
         }
-        return "";
+        return UtilityFunctions.getValidateProjectName(analysisConfig.getValidateProjectURL());
     }
 }

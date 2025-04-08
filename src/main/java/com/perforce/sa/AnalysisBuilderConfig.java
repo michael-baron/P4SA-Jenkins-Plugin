@@ -1,16 +1,15 @@
 package com.perforce.sa;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import hudson.util.Secret;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 public class AnalysisBuilderConfig extends AbstractDescribableImpl<AnalysisBuilderConfig> {
 
     private final String validateProjectURL;
-    private final String validateApiUser;
-    private final Secret validateApiToken;
     private final String engine;
     private final String analysisType;
     private final boolean usingBuildCmd;
@@ -18,10 +17,11 @@ public class AnalysisBuilderConfig extends AbstractDescribableImpl<AnalysisBuild
     private boolean usingBuildCaptureFile;
     private final String buildCaptureFile;
     private final String scanBuildName;
-    private final String searchQuery;
     private final boolean enableQualityGate;
-    private final String jobResult;
+    private String jobResult;
     private final String restrictionFileList;
+    private String validateProjectId;
+    private final String validateProjectName;
 
     @DataBoundConstructor
     public AnalysisBuilderConfig(
@@ -32,21 +32,16 @@ public class AnalysisBuilderConfig extends AbstractDescribableImpl<AnalysisBuild
             boolean usingBuildCaptureFile,
             String buildCaptureFile,
             String scanBuildName,
-            String searchQuery,
             String jobResult,
             String validateProjectURL,
-            String validateApiUser,
-            Secret validateApiToken,
             boolean enableQualityGate,
-            String restrictionFileList) {
+            String restrictionFileList,
+            String validateProjectName) {
 
         this.validateProjectURL = validateProjectURL;
-        this.validateApiUser = validateApiUser;
-        this.validateApiToken = validateApiToken;
         this.engine = engine;
         this.analysisType = analysisType;
         this.scanBuildName = scanBuildName;
-        this.searchQuery = searchQuery;
         this.jobResult = jobResult;
         this.enableQualityGate = enableQualityGate;
         this.usingBuildCmd = usingBuildCmd;
@@ -54,39 +49,11 @@ public class AnalysisBuilderConfig extends AbstractDescribableImpl<AnalysisBuild
         this.usingBuildCaptureFile = usingBuildCaptureFile;
         this.buildCaptureFile = buildCaptureFile;
         this.restrictionFileList = restrictionFileList;
-    }
-
-    public AnalysisBuilderConfig(AnalysisBuilderPipelineConfig config) {
-        this.validateProjectURL = config.getValidateProjectURL();
-        this.validateApiUser = config.getValidateApiUser();
-        this.validateApiToken = config.getValidateApiTokenSecret();
-        this.engine = config.getEngine();
-        this.analysisType = config.getAnalysisType();
-        this.scanBuildName = config.getScanBuildName();
-        this.searchQuery = config.getSearchQuery();
-        this.jobResult = config.getJobResult();
-        this.enableQualityGate = config.isEnableQualityGate();
-        this.usingBuildCmd = config.isUsingBuildCmd();
-        this.buildCmd = config.getBuildCmd();
-        this.usingBuildCaptureFile = config.isUsingBuildCaptureFile();
-        this.buildCaptureFile = config.getBuildCaptureFile();
-        this.restrictionFileList = config.getRestrictionFileList();
+        this.validateProjectName = UtilityFunctions.getValidateProjectName(validateProjectURL);
     }
 
     public String getValidateProjectURL() {
         return validateProjectURL;
-    }
-
-    public Secret getValidateApiToken() {
-        return validateApiToken;
-    }
-
-    public String getValidateApiTokenPlain() {
-        return validateApiToken.getPlainText();
-    }
-
-    public String getValidateApiUser() {
-        return validateApiUser;
     }
 
     public String getEngine() {
@@ -99,10 +66,6 @@ public class AnalysisBuilderConfig extends AbstractDescribableImpl<AnalysisBuild
 
     public String getScanBuildName() {
         return scanBuildName;
-    }
-
-    public String getSearchQuery() {
-        return searchQuery;
     }
 
     public boolean isEnableQualityGate() {
@@ -135,6 +98,23 @@ public class AnalysisBuilderConfig extends AbstractDescribableImpl<AnalysisBuild
 
     public String getRestrictionFileList() {
         return restrictionFileList;
+    }
+
+    public String getValidateProjectId() {
+        return validateProjectId;
+    }
+
+    public void setValidateProjectId(String value) {
+        validateProjectId = value;
+    }
+
+    public String getValidateProjectName() {
+        return validateProjectName;
+    }
+
+    @DataBoundSetter
+    public void setJobResult(String jobResult) {
+        this.jobResult = Util.fixEmpty(jobResult);
     }
 
     @Extension
