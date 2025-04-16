@@ -5,13 +5,11 @@ import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.ArgumentListBuilder;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import jenkins.tasks.SimpleBuildStep;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -56,44 +54,68 @@ public class AnalysisBuilder extends Builder implements SimpleBuildStep {
                 getAnalysisConfig().getValidateProjectURL(),
                 getAnalysisConfig().getScanBuildName(),
                 getAnalysisConfig().getRestrictionFileList())) {
-            UtilityFunctions.executeCommand(launcher, listener, workspace, env, cmd, false);
-        }
-        listener.getLogger().println("Retrieving results from Validate API");
-        HashMap<String, String> args = new HashMap<>();
-        String query = getAnalysisConfig().getSearchQuery();
-        if (getAnalysisConfig().getAnalysisType().equals("Baseline")) {
-            query += " build:'"
-                    + UtilityFunctions.resolveEnvVarsInConfig(
-                            env, getAnalysisConfig().getScanBuildName()) + "'";
-        } else {
-            query += " ci:'"
-                    + UtilityFunctions.resolveEnvVarsInConfig(
-                            env, getAnalysisConfig().getScanBuildName()) + "'";
-        }
-        args.put("query", query);
-        args.put(
-                "project",
-                UtilityFunctions.getValidateProjectName(getAnalysisConfig().getValidateProjectURL()));
-        String request = UtilityFunctions.formatAPIRequest("search", args);
-        JSONArray response = UtilityFunctions.getJSONRespose(
-                request,
-                getAnalysisConfig().getValidateApiTokenPlain(),
-                getAnalysisConfig().getValidateApiUser(),
-                UtilityFunctions.getValidateServerURL(getAnalysisConfig().getValidateProjectURL()));
-        if (getAnalysisConfig().isEnableQualityGate()) {
-            listener.getLogger().println("Quality gate is enabled");
-            if (response.isEmpty()) {
-                listener.getLogger().println("No issues found for quality gate");
+            if (getAnalysisConfig().getEngine().equalsIgnoreCase("qac")
+                    && getAnalysisConfig().isEnableQualityGate()
+                    && getAnalysisConfig().getAnalysisType().equalsIgnoreCase("delta")) {
+                BufferedReader response = UtilityFunctions.executeCommandParseOutput(launcher, workspace, env, cmd);
+                if (response != null) {
+                    String line = null;
+                    while ((line = response.readLine()) != null) {
+                        listener.getLogger().println(line);
+                        if (line.trim().toLowerCase().contains("build status: unstable")) {
+                            listener.getLogger().println("issues found for quality gate");
+                            if (getAnalysisConfig().getJobResult().equals("Failure")) {
+                                run.setResult(Result.FAILURE);
+                            } else if (getAnalysisConfig().getJobResult().equals("Unstable")) {
+                                run.setResult(Result.UNSTABLE);
+                            }
+                        }
+                    }
+                }
             } else {
-                listener.getLogger().println(response.size() + " issues found for quality gate");
-                if (getAnalysisConfig().getJobResult().equals("Fail")) {
-                    run.setResult(Result.FAILURE);
-                } else if (getAnalysisConfig().getJobResult().equals("Unstable")) {
-                    run.setResult(Result.UNSTABLE);
+                UtilityFunctions.executeCommand(launcher, listener, workspace, env, cmd, false);
+            }
+        }
+        if (getAnalysisConfig().isEnableQualityGate()
+                && getAnalysisConfig().getAnalysisType().equalsIgnoreCase("delta")
+                && getAnalysisConfig().getEngine().equalsIgnoreCase("klocwork")) {
+            listener.getLogger().println("Quality gate is enabled and getting results from the delta scan");
+            ArgumentListBuilder cmd = ResultsCommands.getResultsCommand(
+                    listener,
+                    getAnalysisConfig().getEngine(),
+                    getAnalysisConfig().getAnalysisType(),
+                    getAnalysisConfig().isUsingBuildCmd(),
+                    getAnalysisConfig().getBuildCmd(),
+                    getAnalysisConfig().isUsingBuildCaptureFile(),
+                    getAnalysisConfig().getBuildCaptureFile(),
+                    getAnalysisConfig().getValidateProjectURL(),
+                    getAnalysisConfig().getScanBuildName(),
+                    getAnalysisConfig().getRestrictionFileList());
+            BufferedReader response = UtilityFunctions.executeCommandParseOutput(launcher, workspace, env, cmd);
+            if (response != null) {
+                String line = null;
+                int localIssues = 0;
+                while ((line = response.readLine()) != null) {
+                    if (!line.trim().equals("")) {
+                        localIssues++;
+                    }
+                }
+                if (localIssues == 0) {
+                    listener.getLogger().println("No issues found for quality gate");
+                } else {
+                    listener.getLogger().println(localIssues + " issues found for quality gate");
+                    if (getAnalysisConfig().getJobResult().equals("Failure")) {
+                        run.setResult(Result.FAILURE);
+                    } else if (getAnalysisConfig().getJobResult().equals("Unstable")) {
+                        run.setResult(Result.UNSTABLE);
+                    }
                 }
             }
         }
         listener.getLogger().println("Adding the build dashboard");
+        getAnalysisConfig()
+                .setValidateProjectId(
+                        UtilityFunctions.getValidateProjectId(getAnalysisConfig(), launcher, workspace, env));
         run.addAction(new AnalysisBuildDashboard(env, getAnalysisConfig()));
     }
 

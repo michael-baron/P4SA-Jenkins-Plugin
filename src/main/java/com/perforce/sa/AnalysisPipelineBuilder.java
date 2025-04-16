@@ -16,14 +16,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class AnalysisPipelineBuilder extends AbstractStepImpl {
 
-    private final AnalysisBuilderPipelineConfig analysisConfig;
+    private final AnalysisBuilderConfig analysisConfig;
 
     @DataBoundConstructor
-    public AnalysisPipelineBuilder(AnalysisBuilderPipelineConfig analysisConfig) {
+    public AnalysisPipelineBuilder(AnalysisBuilderConfig analysisConfig) {
         this.analysisConfig = analysisConfig;
     }
 
-    public AnalysisBuilderPipelineConfig getAnalysisConfig() {
+    public AnalysisBuilderConfig getAnalysisConfig() {
         return analysisConfig;
     }
 
@@ -55,7 +55,7 @@ public class AnalysisPipelineBuilder extends AbstractStepImpl {
 
         @Override
         protected Void run() throws Exception {
-            AnalysisBuilder builder = new AnalysisBuilder(new AnalysisBuilderConfig(step.getAnalysisConfig()));
+            AnalysisBuilder builder = new AnalysisBuilder(step.getAnalysisConfig());
             builder.perform(run, workspace, env, launcher, listener);
             return null;
         }

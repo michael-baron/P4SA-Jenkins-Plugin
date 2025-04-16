@@ -1,6 +1,5 @@
 package com.perforce.sa;
 
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.model.Action;
 
@@ -13,20 +12,26 @@ public class AnalysisBuildDashboard implements Action {
     private final AnalysisBuilderConfig analysisConfig;
 
     public AnalysisBuildDashboard(EnvVars env, AnalysisBuilderConfig analysisConfig) {
-        this.url = "P4SADashboard";
-        this.text = "P4 SA Dashboard";
-        this.icon = "/plugin/p4sa-plugin/icon/p4.png";
+        this.text = analysisConfig.getEngine() + " Scan Results";
+        this.icon = "/plugin/p4sa/icon/logo-perforce-icon-reg.svg";
         this.env = env;
         this.analysisConfig = analysisConfig;
+        this.url = getValidateBuildUrlLink();
     }
 
-    public String getValidateBuildUrlLink() throws AbortException {
+    public String getValidateBuildUrlLink() {
         String validatePortalURL = "";
+        String projectUrlName = "";
+        if (getAnalysisConfig().getValidateProjectId() == null) {
+            projectUrlName = getAnalysisConfig().getValidateProjectName();
+        } else {
+            projectUrlName = getAnalysisConfig().getValidateProjectId();
+        }
         if (getAnalysisConfig().getAnalysisType().equals("Baseline")) {
             validatePortalURL =
                     UtilityFunctions.getValidateServerURL(getAnalysisConfig().getValidateProjectURL())
                             + "/review/insight-review.html#issuelist_goto:project="
-                            + UtilityFunctions.getValidateProjectId(getAnalysisConfig())
+                            + projectUrlName
                             + ",searchquery=build%253A'"
                             + UtilityFunctions.resolveEnvVarsInConfig(
                                     getEnv(), getAnalysisConfig().getScanBuildName())
@@ -35,7 +40,7 @@ public class AnalysisBuildDashboard implements Action {
             validatePortalURL =
                     UtilityFunctions.getValidateServerURL(getAnalysisConfig().getValidateProjectURL())
                             + "/review/insight-review.html#issuelist_goto:project="
-                            + UtilityFunctions.getValidateProjectId(getAnalysisConfig())
+                            + projectUrlName
                             + ",searchquery=ci%253A'"
                             + UtilityFunctions.resolveEnvVarsInConfig(
                                     getEnv(), getAnalysisConfig().getScanBuildName())
