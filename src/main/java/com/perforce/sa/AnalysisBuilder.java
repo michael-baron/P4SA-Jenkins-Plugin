@@ -54,10 +54,31 @@ public class AnalysisBuilder extends Builder implements SimpleBuildStep {
                 getAnalysisConfig().getValidateProjectURL(),
                 getAnalysisConfig().getScanBuildName(),
                 getAnalysisConfig().getRestrictionFileList())) {
-            UtilityFunctions.executeCommand(launcher, listener, workspace, env, cmd, false);
+            if (getAnalysisConfig().getEngine().equalsIgnoreCase("qac")
+                    && getAnalysisConfig().isEnableQualityGate()
+                    && getAnalysisConfig().getAnalysisType().equalsIgnoreCase("delta")) {
+                BufferedReader response = UtilityFunctions.executeCommandParseOutput(launcher, workspace, env, cmd);
+                if (response != null) {
+                    String line = null;
+                    while ((line = response.readLine()) != null) {
+                        listener.getLogger().println(line);
+                        if (line.trim().toLowerCase().contains("build status: unstable")) {
+                            listener.getLogger().println("issues found for quality gate");
+                            if (getAnalysisConfig().getJobResult().equals("Failure")) {
+                                run.setResult(Result.FAILURE);
+                            } else if (getAnalysisConfig().getJobResult().equals("Unstable")) {
+                                run.setResult(Result.UNSTABLE);
+                            }
+                        }
+                    }
+                }
+            } else {
+                UtilityFunctions.executeCommand(launcher, listener, workspace, env, cmd, false);
+            }
         }
         if (getAnalysisConfig().isEnableQualityGate()
-                && getAnalysisConfig().getAnalysisType().equals("Delta")) {
+                && getAnalysisConfig().getAnalysisType().equalsIgnoreCase("delta")
+                && getAnalysisConfig().getEngine().equalsIgnoreCase("klocwork")) {
             listener.getLogger().println("Quality gate is enabled and getting results from the delta scan");
             ArgumentListBuilder cmd = ResultsCommands.getResultsCommand(
                     listener,

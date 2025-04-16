@@ -40,7 +40,7 @@ public class ResultsCommands {
             String buildCaptureFile,
             String validateProjectURL,
             String buildName) {
-        ArgumentListBuilder cmds = new ArgumentListBuilder("qacli", "validate", "cibuild", "-P", ".", "-b", buildName);
+        ArgumentListBuilder cmds = new ArgumentListBuilder("qacli", "validate", "cibuild", "--help");
         return cmds;
     }
 

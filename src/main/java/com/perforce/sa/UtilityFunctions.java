@@ -7,7 +7,6 @@ import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
 import java.io.*;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -98,20 +97,6 @@ public class UtilityFunctions {
             serverURL = matcher.group(1);
         }
         return serverURL;
-    }
-
-    public static String formatAPIRequest(String action, HashMap<String, String> args) throws AbortException {
-        String request = "&action=" + action;
-        if (!args.isEmpty()) {
-            try {
-                for (HashMap.Entry<String, String> entry : args.entrySet()) {
-                    request += "&" + entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), "UTF-8");
-                }
-            } catch (UnsupportedEncodingException ex) {
-                throw new AbortException(ex.getMessage());
-            }
-        }
-        return request;
     }
 
     public static String resolveEnvVarsInConfig(EnvVars env, String input) {
