@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.List;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -125,6 +126,7 @@ public class AnalysisBuilder extends Builder implements SimpleBuildStep {
     }
 
     @Extension
+    @Symbol("p4StaticAnalysis")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         public DescriptorImpl() {

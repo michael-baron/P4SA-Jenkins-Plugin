@@ -4,16 +4,10 @@ import hudson.model.Action;
 
 public class AnalysisProjectDashboard implements Action {
 
-    public final String url;
-    public final String text;
-    public final String icon;
     private final AnalysisBuilderConfig analysisConfig;
 
     public AnalysisProjectDashboard(AnalysisBuilderConfig analysisConfig) {
         this.analysisConfig = analysisConfig;
-        this.url = getValidateProjectUrlLink();
-        this.text = "P4 SA Dashboard";
-        this.icon = "/plugin/p4sa/icon/logo-perforce-icon-reg.svg";
     }
 
     public String getValidateProjectUrlLink() {
@@ -36,16 +30,16 @@ public class AnalysisProjectDashboard implements Action {
 
     @Override
     public String getUrlName() {
-        return url;
+        return getValidateProjectUrlLink();
     }
 
     @Override
     public String getDisplayName() {
-        return text;
+        return "Perforce Validate";
     }
 
     @Override
     public String getIconFileName() {
-        return icon;
+        return "symbol-logo-perforce-icon-reg plugin-p4sa";
     }
 }

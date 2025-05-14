@@ -5,18 +5,22 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="${%Select Analysis Engine}" field="engine">
-        <select name="engine">
-            <f:option value="QAC" selected="${instance.engine.equals('QAC')? 'true' : null}">QAC</f:option>
-            <f:option value="Klocwork" selected="${instance.engine.equals('Klocwork')? 'true' : null}">Klocwork</f:option>
-        </select>
+    <f:entry title="Select Analysis Engine" field="engine">
+        <div class="jenkins-select">
+            <select name="engine" class="jenkins-select__input">
+                <f:option value="QAC" selected="${instance.engine.equals('QAC')? 'true' : null}">QAC</f:option>
+                <f:option value="Klocwork" selected="${instance.engine.equals('Klocwork')? 'true' : null}">Klocwork</f:option>
+            </select>
+        </div>
     </f:entry>
 
     <f:entry title="${%Select Analysis Type}" field="analysisType">
-        <select name="analysisType">
-            <f:option value="Baseline" selected="${instance.analysisType.equals('Baseline')? 'true' : null}">Baseline</f:option>
-            <f:option value="Delta" selected="${instance.analysisType.equals('Delta')? 'true' : null}">Delta</f:option>
-        </select>
+        <div class="jenkins-select">
+            <select name="analysisType" class="jenkins-select__input">
+                <f:option value="Baseline" selected="${instance.analysisType.equals('Baseline')? 'true' : null}">Baseline</f:option>
+                <f:option value="Delta" selected="${instance.analysisType.equals('Delta')? 'true' : null}">Delta</f:option>
+            </select>
+        </div>
     </f:entry>
 
     <f:optionalBlock name="usingBuildCmd" title="${%Use Build Command}" checked="${instance.usingBuildCmd}" inline="true" field="usingBuildCmd">
@@ -45,7 +49,7 @@
             <f:textbox default="$BUILD_TAG"/>
         </f:entry>
 
-        <f:entry title="${%Restriction File List}" field="restrictionFileList">
+        <f:entry title="${%Analysis Working Set Filename}" field="restrictionFileList">
             <f:textbox/>
         </f:entry>
     </f:advanced>
