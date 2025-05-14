@@ -1,4 +1,14 @@
 <div>
-  If performing a delta analysis you may provide the path to a list of files to restrict the analysis to. An example
-  command to generate this might be: git diff --name-only origin/master > restriction_list.txt
+  If performing a delta analysis with the Klocwork engine you may provide the path to text file that contains 
+  a list of files present in the build specifcation to restrict the analysis to. An example command to generate 
+  this might be: 'git diff --name-only origin/master > restriction_list.txt'
+
+  The required format fo the contents being, restriction_list.txt:
+
+  sourceFileA.cpp
+  sourceFileB.cpp
+  sourceFileC.c
+  ...
+
+  Note that files not present in the build specifcation can be included, however they will be ignored by the analysis.
 </div>

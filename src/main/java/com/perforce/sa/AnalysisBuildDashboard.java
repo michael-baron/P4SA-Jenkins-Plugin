@@ -5,18 +5,12 @@ import hudson.model.Action;
 
 public class AnalysisBuildDashboard implements Action {
 
-    public final String url;
-    public final String text;
-    public final String icon;
     private final EnvVars env;
     private final AnalysisBuilderConfig analysisConfig;
 
     public AnalysisBuildDashboard(EnvVars env, AnalysisBuilderConfig analysisConfig) {
-        this.text = analysisConfig.getEngine() + " Scan Results";
-        this.icon = "/plugin/p4sa/icon/logo-perforce-icon-reg.svg";
         this.env = env;
         this.analysisConfig = analysisConfig;
-        this.url = getValidateBuildUrlLink();
     }
 
     public String getValidateBuildUrlLink() {
@@ -57,22 +51,18 @@ public class AnalysisBuildDashboard implements Action {
         return env;
     }
 
-    public String getHeaderTitle() {
-        return "P4 SA (" + getAnalysisConfig().getEngine() + ") Results";
-    }
-
     @Override
     public String getUrlName() {
-        return url;
+        return getValidateBuildUrlLink();
     }
 
     @Override
     public String getDisplayName() {
-        return text;
+        return analysisConfig.getEngine() + " Scan Results";
     }
 
     @Override
     public String getIconFileName() {
-        return icon;
+        return "symbol-logo-perforce-icon-reg plugin-p4sa";
     }
 }
